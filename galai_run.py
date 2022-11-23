@@ -2,7 +2,7 @@
 import galai as gal
 
 model = gal.load_model("large")
-output=model.generate("multi-modality self-supervised learning survey\n\n", new_doc=True, top_p=0.7, max_length=200)
+output=model.generate("multi-modality self-supervised learning survey", new_doc=True, top_p=0.7, max_length=200)
 print(output)
 # from transformers import AutoTokenizer, OPTForCausalLM
 # import torch
