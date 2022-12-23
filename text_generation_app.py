@@ -125,7 +125,7 @@ with demo:
                     alpha = gr.Slider(value=0.6, minimum=0.01, maximum=1.0, step=0.01, label="Alpha")
                     k = gr.Slider(value=6, minimum=1, maximum=20, step=1, label="K")
                     gr.Markdown("Sampling options:")
-                    temperature = gr.Slider(value=0.7, minimum=0,1, maximum=1, step=1, label="K")
+                    temperature = gr.Slider(value=0.7, minimum=0.1, maximum=1, step=1, label="K")
                     gr.Markdown("Sampling options:")
                     top_k = gr.Slider(value=50, minimum=1, maximum=100, step=1, label="Top K")
                     seed = gr.Number(value=42, precision=0, label="Seed")

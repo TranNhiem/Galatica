@@ -71,7 +71,7 @@ def get_model_and_tokenizer(model_id):
     elif "galactica" in model_id:
         cache_dir= "/data1/pretrained_weight/Glatica/"
 
-    model = OPTForCausalLM.from_pretrained(model_id, cache_dir=cache_dir, device_map="auto",) ## [load_in_8bit=True, torch_dtype=torch.float16
+    model = OPTForCausalLM.from_pretrained(model_id, cache_dir=cache_dir, device_map="auto",torch_dtype=torch.float16) ## [load_in_8bit=True, torch_dtype=torch.float16
     tokenizer = AutoTokenizer.from_pretrained(model_id,cache_dir=cache_dir)
     
 
@@ -154,6 +154,40 @@ def run_generation(
     contrastive_text = tokenizer.decode(contrastive_ids[0], skip_special_tokens=True)
     return contrastive_text, contrastive_time
 
+def multiple_methods_generate(text, model_id,min_length, max_new_tokens): 
+    model_id=model_size[model_id]
+    model, tokenizer = get_model_and_tokenizer(model_id)
+    text= text + str("\n\n")
+    
+    input_texts = [escape_custom_split_sequence(text)]
+    
+    input_ids = tokenizer(input_texts, return_tensors='pt').input_ids.to("cuda")
+    
+    
+
+    text_generate = model.generate(
+        # from the tokenizer
+        input_ids,
+        # fixed arguments
+        min_length= min_length,
+        max_new_tokens= max_new_tokens,
+        length_penalty=1.4, 
+        num_beams= 16,
+        no_repeat_ngram_size=2, 
+        #num_return_sequences=1,
+        early_stopping=True,
+        # variable arguments
+
+        # penalty_alpha=0.6,
+        top_k=150,
+        temperature=0.7,
+        top_p=0.92, 
+        repetition_penalty=2.1, 
+    )
+    text_output = tokenizer.decode(text_generate[0], skip_special_tokens=True)
+    
+    return text_output
+
 
 def generate_contrastive_beam_search(text, model_id, max_new_tokens, alpha, k, num_beams):
     contrastive_text, contrastive_time = run_generation(text, model_id, max_new_tokens, alpha=alpha, top_k=k)
@@ -172,6 +206,36 @@ demo = gr.Blocks()
 
 with demo:
     with gr.Tabs():
+        with gr.TabItem("📄 Multiple Methods:"):
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("## Inputs ✍️")
+                    with gr.Box():
+                        with gr.Row(mobile_collapse=False, equal_height=True):
+                            with gr.Column(scale=1, min_width=100, min_height=100):
+                                #model_id = gr.Text(value="facebook/galactica-6.7b", label="Model Repository")
+                                model_id = gr.Dropdown( ["mmini-125M","base-1.3B", "standard-6.7B","large-30B", "huge-120B"], value="standard-6.7B", label="Model Size")
+                            with gr.Column(scale=1, min_width=100, min_height=600):
+                                new_doc= gr.Checkbox(value=False, label="Generateion New Document")
+                            with gr.Column(scale=1, min_width=100, min_height=100):
+                                max_lenght = gr.Slider(value=400, minimum=100, maximum=3000,step=100, label="Maximum length")
+                            with gr.Column(scale=1, min_width=100, min_height=100):
+                                min_lenght = gr.Slider(value=256, minimum=100, maximum=3000,step=100, label="Maximum length")
+                        
+                        generate_button = gr.Button(value="Generate", label="Generate")
+
+                        with gr.Row():
+                            input_text = gr.Textbox(value="Self-Supervised learning is", lines=5, label="Input Text").style(height=600)
+                with gr.Column():
+                    gr.Markdown("## Outputs 🤖 of multiple methods")
+                    text_output = gr.Textbox(value="", label="")
+                # actions
+                generate_button.click(
+                    fn=multiple_methods_generate,
+                    inputs=[input_text, model_id, min_lenght, max_lenght],
+                    outputs=[text_output]
+                )
+        
         with gr.TabItem("📄 Generate Documents 1:"):
             with gr.Row():
                 with gr.Column():
@@ -275,4 +339,4 @@ with demo:
             )
 
 
-demo.launch()
+demo.launch(share=True)

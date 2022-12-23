@@ -100,7 +100,7 @@ outputs = model.generate(input_ids,
 
 
 print(tokenizer.decode(outputs[0]))
-print("------------------Done Keycleus Search------------------")
+print("------------------Done Key Nucleus Search------------------")
 
 ###---------------  Using Top-K sampling -----------------
 outputs = model.generate(
